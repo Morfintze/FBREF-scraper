@@ -36,6 +36,19 @@ def simplify_column_name(col_name, tab_name):
     
     return col_name
 
+def remove_duplicate_columns(df):
+    """Verwijder duplicate kolommen uit de DataFrame."""
+    # Zoek duplicate kolomnamen
+    duplicate_cols = df.columns[df.columns.duplicated()].tolist()
+    
+    if duplicate_cols:
+        st.warning(f"⚠️ {len(duplicate_cols)} duplicate kolommen gevonden en verwijderd: {duplicate_cols}")
+        
+        # Behoud alleen de eerste instantie van elke duplicate kolom
+        df = df.loc[:, ~df.columns.duplicated()]
+    
+    return df
+
 def scrape_fbref_team_season(team_url):
     # Regex om de basis van de URL te valideren en info uit te halen
     match = re.search(
@@ -125,6 +138,9 @@ def scrape_fbref_team_season(team_url):
     # Merge alle tabbladen op merge_keys
     df_final = reduce(lambda left, right: pd.merge(left, right, on=merge_keys, how="outer"), dfs)
     df_final = df_final.sort_values("Date", ascending=True)
+    
+    # Verwijder duplicate kolommen
+    df_final = remove_duplicate_columns(df_final)
 
     return df_final
 
@@ -144,7 +160,18 @@ if st.button("Scrape team data"):
             
             # Toon voorbeeld van de data
             st.subheader("Voorbeeld van de data:")
-            st.dataframe(df.head(10))
+            
+            # Controleer op duplicate kolommen voordat we weergeven
+            if df.columns.duplicated().any():
+                st.warning("⚠️ Er zijn nog steeds duplicate kolommen in de data. Deze worden nu verwijderd.")
+                df = df.loc[:, ~df.columns.duplicated()]
+            
+            try:
+                st.dataframe(df.head(10))
+            except Exception as e:
+                st.error(f"❌ Fout bij weergeven van data: {str(e)}")
+                st.write("Kolomnamen in de data:")
+                st.write(list(df.columns))
             
             # Download knop
             csv_data = df.to_csv(index=False).encode("utf-8")
