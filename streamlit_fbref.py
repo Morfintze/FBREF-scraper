@@ -1,3 +1,4 @@
+import base64
 import streamlit as st
 import pandas as pd
 import requests
@@ -337,16 +338,36 @@ if st.button("🚀 Scrape team data", disabled=len(selected_tabs) == 0):
                 file_name=f"{team_name}_season_stats.csv",
                 mime="text/csv"
             )
-# Auto-download (optioneel)
+            
+csv_data = df.to_csv(index=False).encode("utf-8")
+team_name = url.split("/")[-1].replace("-Match-Logs-All-Competitions", "")
+
+st.download_button(
+    label="⬇️ Download CSV",
+    data=csv_data,
+    file_name=f"{team_name}_season_stats.csv",
+    mime="text/csv"
+)
+
+# --- Auto-download (veiligere versie met base64) ---
+# Zorg dat dit binnen hetzelfde if-blok staat zodat csv_data bestaat
+b64 = base64.b64encode(csv_data).decode('ascii')
+
 download_js = f"""
 <script>
-var a = document.createElement('a');
-a.href = 'data:text/csv;charset=utf-8,{csv_data.decode("utf-8").replace("\n", "%0A").replace(",", "%2C")}';
-a.download = '{team_name}_season_stats.csv';
-a.style.display = 'none';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
+(function() {{
+  var b64 = "{b64}";
+  var link = document.createElement('a');
+  link.href = 'data:text/csv;base64,' + b64;
+  link.download = "{team_name}_season_stats.csv";
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  // kort vertragingetje zodat de browser alles kan verwerken en eventuele CSP/injectie timing issues minder voorkomen
+  setTimeout(function() {{
+      link.click();
+      document.body.removeChild(link);
+  }}, 700);
+}})();
 </script>
 """
 
