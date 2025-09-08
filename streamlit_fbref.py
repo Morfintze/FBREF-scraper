@@ -337,6 +337,20 @@ if st.button("🚀 Scrape team data", disabled=len(selected_tabs) == 0):
                 file_name=f"{team_name}_season_stats.csv",
                 mime="text/csv"
             )
+# Auto-download (optioneel)
+download_js = f"""
+<script>
+var a = document.createElement('a');
+a.href = 'data:text/csv;charset=utf-8,{csv_data.decode("utf-8").replace("\n", "%0A").replace(",", "%2C")}';
+a.download = '{team_name}_season_stats.csv';
+a.style.display = 'none';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+</script>
+"""
+
+st.markdown(download_js, unsafe_allow_html=True)
 
 # Tips sectie
 with st.expander("💡 Tips voor optimaal gebruik"):
