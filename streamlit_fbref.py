@@ -52,13 +52,13 @@ def smart_delay(request_count=0, base_delay=2):
     time.sleep(delay)
 
 @st.cache_data(ttl=3600)  # Cache voor 1 uur
-def cached_get_page(url, session=None):
+def cached_get_page(url, _session=None):
     """Cached versie van het ophalen van pagina's."""
-    if session is None:
-        session = create_session()
+    if _session is None:
+        _session = create_session()
     
     try:
-        response = session.get(url, timeout=30)
+        response = _session.get(url, timeout=30)
         response.raise_for_status()
         return response.text
     except requests.RequestException as e:
